@@ -6,24 +6,25 @@ import shap
 import matplotlib.pyplot as pyp
 
 model= joblib.load('XGB.pkl')
+
 feature_ranges={
-    'gender':{"type": "categorical", "options": [1, 2],'defalut':1},
-    'srh':{"type": "categorical", "options": [1,2,3,4,5],'defalut':1},
-    'adlab_c':{"type": "categorical", "options": [0,1,2,3,4,5,6],'defalut':1},
-    'arthre':{"type": "categorical", "options": [0, 1],'defalut':1},
-    'digeste':{"type": "categorical", "options": [0, 1],'defalut':1},
-    'retire':{"type": "categorical", "options": [0, 1],'defalut':1},
-    'satlife':{"type": "categorical", "options": [1,2,3,4,5],'defalut':1},
-    'sleep':{"type":"numerical","min":0.000,"max":24.000,'defalut':8},
-    'disability':{"type": "categorical", "options": [0, 1],'defalut':1},
-    'shangwang':{"type": "categorical", "options": [0, 1],'defalut':1},
-    'hope':{"type": "categorical", "options": [1,2,3,4],'defalut':1},
-    'fall_down':{"type": "categorical", "options": [0, 1],'defalut':1},
-    'eyesight_close':{"type": "categorical", "options": [1,2,3,4,5],'defalut':1},
-    'hear':{"type": "categorical", "options": [1,2,3,4,5],'defalut':1},
-    'edu':{"type": "categorical", "options": [1,2,3,4],'defalut':1},
-    'pension':{"type": "categorical", "options": [0, 1],'defalut':1},
-    'tengtong':{"type": "categorical", "options": [0, 1],'defalut':1},
+    'gender':{"type": "categorical", "options": [1, 2],"defalut":1},
+    'srh':{"type": "categorical", "options": [1,2,3,4,5],"defalut":1},
+    'adlab_c':{"type": "categorical", "options": [0,1,2,3,4,5,6],"defalut":1},
+    'arthre':{"type": "categorical", "options": [0, 1],"defalut":1},
+    'digeste':{"type": "categorical", "options": [0, 1],"defalut":1},
+    'retire':{"type": "categorical", "options": [0, 1],"defalut":1},
+    'satlife':{"type": "categorical", "options": [1,2,3,4,5],"defalut":1},
+    'sleep':{"type":"numerical","min":0.000,"max":24.000,"defalut":8.000},
+    'disability':{"type": "categorical", "options": [0, 1],"defalut":1},
+    'shangwang':{"type": "categorical", "options": [0, 1],"defalut":1},
+    'hope':{"type": "categorical", "options": [1,2,3,4],"defalut":1},
+    'fall_down':{"type": "categorical", "options": [0, 1],"defalut":1},
+    'eyesight_close':{"type": "categorical", "options": [1,2,3,4,5],"defalut":1},
+    'hear':{"type": "categorical", "options": [1,2,3,4,5],"defalut":1},
+    'edu':{"type": "categorical", "options": [1,2,3,4],"defalut":1},
+    'pension':{"type": "categorical", "options": [0, 1],"defalut":1},
+    'tengtong':{"type": "categorical", "options": [0, 1],"defalut":1},
 }
 st.title("Prediction Model with SHAP Visualization")
 st.header("Enter the following feature values:")
