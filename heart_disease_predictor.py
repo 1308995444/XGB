@@ -27,6 +27,7 @@ feature_ranges={
 }
 st.title("Prediction Model with SHAP Visualization")
 st.header("Enter the following feature values:")
+feature_values=[]
 for feature, properties in feature_ranges.items():
     if properties["type"]== "numerical": 
         value = st.number_input(
