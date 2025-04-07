@@ -51,29 +51,28 @@ if st.button("Predict"):
     probability = predicted_proba[predicted_class]*100
 
 
-text = f"Based on feature values, predicted possibility of AKI is {probability:.2f}%" 
-fig,ax = plt.subplots(figsize=(8,1))
-ax.text(
-    0.5,0.5,text, 
-    fontsize=16,
-    ha='center', va='center',	
-    fontname='Times New Roman',
-    transform=ax.transAxes
-)
+    text = f"Based on feature values, predicted possibility of AKI is {probability:.2f}%" 
+    fig,ax = plt.subplots(figsize=(8,1))
+    ax.text(
+        0.5,0.5,text, 
+        fontsize=16,
+        ha='center', va='center',	
+        fontname='Times New Roman',
+        transform=ax.transAxes)
 
-ax.axis('off')
-plt.savefig("prediction_text.png",bbox_inches='tight', dpi=300)
-st.image("prediction_text.png")
+    ax.axis('off')
+    plt.savefig("prediction_text.png",bbox_inches='tight', dpi=300)
+    st.image("prediction_text.png")
 
-explainer = shap.TreeExplainer(model)
-shap_values = explainer.shap_values(pd.DataFrame([feature_values],columns=feature_ranges.keys()))
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(pd.DataFrame([feature_values],columns=feature_ranges.keys()))
 
-class_index = predicted_class
-shap_fig = shap.force_plot(
-    explainer.expected_value[class_index], 
-    shap_values[:,:,class_index],
-    pd.DataFrame([feature_values],columns=feature_ranges.keys()),
-    matplotlib=True,
-    )
-plt.savefig("shap_force_plot.png",bbox_inches='tight', dpi=1200)
-st.image("shap_force_plot.png")
+    class_index = predicted_class
+    shap_fig = shap.force_plot(
+        explainer.expected_value[class_index], 
+        shap_values[:,:,class_index],
+        pd.DataFrame([feature_values],columns=feature_ranges.keys()),
+        matplotlib=True,
+        )
+    plt.savefig("shap_force_plot.png",bbox_inches='tight', dpi=1200)
+    st.image("shap_force_plot.png")
