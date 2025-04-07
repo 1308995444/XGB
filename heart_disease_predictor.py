@@ -68,6 +68,11 @@ if st.button("Predict"):
     shap_values = explainer.shap_values(pd.DataFrame([feature_values],columns=feature_ranges.keys()))
 
     class_index = predicted_class
-    shap_fig = shap.force_plot(explainer.expected_value[class_index], shap_values[:,:,class_index],pd.DataFrame([feature_values],columns=feature_ranges.keys()),matplotlib=True,)
+    shap_fig = shap.force_plot(
+        explainer.expected_value[class_index],
+        shap_values[:,:,class_index],
+        pd.DataFrame([feature_values],columns=feature_ranges.keys()),
+        matplotlib=True,
+    )
     plt.savefig("shap_force_plot.png",bbox_inches='tight', dpi=1200)
     st.image("shap_force_plot.png")
