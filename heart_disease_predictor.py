@@ -5,7 +5,6 @@ import pandas as pd
 import shap
 import matplotlib.pyplot as plt
 
-# 加载模型
 model = joblib.load('XGB.pkl')
 
 feature_ranges = {
@@ -31,10 +30,9 @@ feature_ranges = {
 st.title("Prediction Model with SHAP Visualization")
 st.header("Enter the following feature values:")
 
-# 收集特征值
 feature_values = []
 for feature, properties in feature_ranges.items():
-    if properties["type"] == "numerical":  # 修正了拼写错误(原为"numerical")
+    if properties["type"] == "numerical":
         value = st.number_input(
             label=f"{feature}({properties['min']} - {properties['max']})", 
             min_value=float(properties["min"]), 
@@ -51,13 +49,12 @@ for feature, properties in feature_ranges.items():
 features = np.array([feature_values])
 
 if st.button("Predict"):
-    # 预测
     predicted_class = model.predict(features)[0]
     predicted_proba = model.predict_proba(features)[0]
     probability = predicted_proba[predicted_class] * 100
 
-    # 显示预测结果
-    text = f"Based on feature values, predicted possibility of AKI is {probability:.2f}%" 
+
+    text = f"Based on feature values, predicted possibility of XGB is {probability:.2f}%" 
     fig, ax = plt.subplots(figsize=(8,1))
     ax.text(
         0.5, 0.5, text, 
@@ -66,26 +63,26 @@ if st.button("Predict"):
         fontname='Times New Roman',
         transform=ax.transAxes)
     ax.axis('off')
-    st.pyplot(fig)  # 直接使用st.pyplot()而不是保存图片
+    st.pyplot(fig)
 
-    # SHAP解释
+
     explainer = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(pd.DataFrame([feature_values], columns=feature_ranges.keys()))
     
-    # 处理SHAP输出的不同格式
+
     if isinstance(shap_values, list):
-        # 多类别情况
+
         shap_values_class = shap_values[predicted_class][0]
         expected_value = explainer.expected_value[predicted_class]
     else:
-        # 二分类情况
+
         shap_values_class = shap_values[0]
         expected_value = explainer.expected_value
     
-    # 创建DataFrame用于显示
+
     feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
     
-    # 创建force plot
+
     plt.figure()
     shap_plot = shap.force_plot(
         expected_value,
@@ -94,13 +91,4 @@ if st.button("Predict"):
         matplotlib=True,
         show=False
     )
-    st.pyplot(plt.gcf())  # 显示当前图形
-    
-    # 可选: 添加summary plot
-    st.subheader("SHAP Summary Plot")
-    plt.figure()
-    shap.summary_plot(shap_values if isinstance(shap_values, list) else [shap_values],
-                     feature_df,
-                     plot_type="bar",
-                     show=False)
-    st.pyplot(plt.gcf())
+    st.pyplot(plt.gcf())  
