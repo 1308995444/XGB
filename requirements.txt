@@ -1,9 +1,6 @@
-pandas==2.2.2
+streamlit==1.30.0
+scikit-learn==1.5.1
 numpy==1.26.4
+pandas==2.2.2
 matplotlib==3.9.2
-sklearn-learn==1.5.1
-xgboost==2.1.4
-shap==0.47.0
-statsmodels==0.14.2
-joblib==1.4.2
-clust-learn==1.6.1
+xgboost==2.0.3
