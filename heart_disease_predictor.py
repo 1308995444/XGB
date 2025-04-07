@@ -20,7 +20,7 @@ feature_ranges={
     'hope':{"type": "categorical", "options": [1,2,3,4],'defalut':1},
     'fall_down':{"type": "categorical", "options": [0, 1],'defalut':1},
     'eyesight_close':{"type": "categorical", "options": [1,2,3,4,5],'defalut':1},
-    'hear':{"type": "categorical", "options": [1,2,3,4,5]},'defalut':1,
+    'hear':{"type": "categorical", "options": [1,2,3,4,5],'defalut':1},
     'edu':{"type": "categorical", "options": [1,2,3,4],'defalut':1},
     'pension':{"type": "categorical", "options": [0, 1],'defalut':1},
     'tengtong':{"type": "categorical", "options": [0, 1],'defalut':1},
