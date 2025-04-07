@@ -79,6 +79,13 @@ if st.button("Predict"):
         expected_value = explainer.expected_value
 
     feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
-    
-    plt.savefig("shap_force_plot.png",bbox_inches='tight', dpi=1200)
-    st.image("shap_force_plot.png")
+
+    plt.figure()
+    shap_plot = shap.force_plot(
+        expected_value,
+        shap_values_class,
+        feature_df,
+        matplotlib=True,
+        show=False
+    )
+    st.pyplot(plt.gcf())
