@@ -3,7 +3,7 @@ import joblib
 import numpy as np
 import pandas as pd
 import shap
-import matplotlib.pyplot as pyp
+import matplotlib.pyplot as plt
 
 model= joblib.load('XGB.pkl')
 
@@ -43,16 +43,16 @@ for feature, properties in feature_ranges.items():
             options=properties["options"],
         )
     feature_values.append(value)
-feature= np.array([feature_values])
+features= np.array([feature_values])
 
 if st.button("Predict"):
     predicted_class = model.predict(features)[0]
     predicted_proba = model.predict_proba(features)[0]
-    probability = predicted_proba[predicted_c1ass]*100
+    probability = predicted_proba[predicted_class]*100
 
 
-text = f"Based on feature values, predicted possibility of AKI is {probabi1ity:.2f}%" 
-fig,ax = pit.subplots(figsize=(8,1))
+text = f"Based on feature values, predicted possibility of AKI is {probability:.2f}%" 
+fig,ax = plt.subplots(figsize=(8,1))
 ax.text(
     0.5,0.5,text, 
     fontsize=16,
@@ -62,18 +62,18 @@ ax.text(
 )
 
 ax.axis('off')
-p1t.savefig("prediction_text.png",bbox_inches='tight', dpi=300)
+plt.savefig("prediction_text.png",bbox_inches='tight', dpi=300)
 st.image("prediction_text.png")
 
-explainer = shap.TreeExp1ainer(mode1)
-shap_va1ues = exp1ainer.shap_va1ues(pd.DataFrame([feature_values],columns=feature_ranges.keys()))
+explainer = shap.TreeExplainer(model)
+shap_values = explainer.shap_values(pd.DataFrame([feature_values],columns=feature_ranges.keys()))
 
 class_index = predicted_class
-shap_fig = shap,force_p1ot(
-    exp1ainer.expected_va1ue[c1ass_index], 
-    shap_values[:,:,c1ass_index],
+shap_fig = shap.force_plot(
+    explainer.expected_value[class_index], 
+    shap_values[:,:,class_index],
     pd.DataFrame([feature_values],columns=feature_ranges.keys()),
-    matp1ot1ib=True,
+    matplotlib=True,
     )
-p1t.savefig("shap_force_p1ot.png",bbox_inches='tight', dpi=1200)
-st.image("shap_force_p1ot.png")
+plt.savefig("shap_force_plot.png",bbox_inches='tight', dpi=1200)
+st.image("shap_force_plot.png")
