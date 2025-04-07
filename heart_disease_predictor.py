@@ -69,7 +69,6 @@ if st.button("Predict"):
     explainer = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(pd.DataFrame([feature_values], columns=feature_ranges.keys()))
     
-
     if isinstance(shap_values, list):
 
         shap_values_class = shap_values[predicted_class][0]
@@ -78,17 +77,8 @@ if st.button("Predict"):
 
         shap_values_class = shap_values[0]
         expected_value = explainer.expected_value
-    
 
     feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
     
-
-    plt.figure()
-    shap_plot = shap.force_plot(
-        expected_value,
-        shap_values_class,
-        feature_df,
-        matplotlib=True,
-        show=False
-    )
-    st.pyplot(plt.gcf())  
+    plt.savefig("shap_force_plot.png",bbox_inches='tight', dpi=1200)
+    st.image("shap_force_plot.png")
