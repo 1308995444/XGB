@@ -15,7 +15,7 @@ feature_ranges={
     'digeste':{"type": "categorical", "options": [0, 1]},
     'retire':{"type": "categorical", "options": [0, 1]},
     'satlife':{"type": "categorical", "options": [1,2,3,4,5]},
-    'sleep':{"type":"numerical","min":0.000,"max":24.000,"defalut":8.000},
+    'sleep':{"type":"numerical","min":0.000,"max":24.000,"default":8.000},
     'disability':{"type": "categorical", "options": [0, 1]},
     'shangwang':{"type": "categorical", "options": [0, 1]},
     'hope':{"type": "categorical", "options": [1,2,3,4]},
