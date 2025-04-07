@@ -73,6 +73,6 @@ if st.button("Predict"):
         shap_values[:,:,class_index],
         pd.DataFrame([feature_values],columns=feature_ranges.keys()),
         matplotlib=True,
-        )
+    )
     plt.savefig("shap_force_plot.png",bbox_inches='tight', dpi=1200)
     st.image("shap_force_plot.png")
