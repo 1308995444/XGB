@@ -1,7 +1,9 @@
 streamlit==1.30.0
-scikit-learn==1.5.1
+scikit-learn==1.6.1
 numpy==1.26.4
 pandas==2.2.2
 matplotlib==3.9.2
-xgboost==2.0.3
-shap==0.45.1
+xgboost==2.1.4
+shap==0.47.0
+joblib==1.4.2
+clust-learn==1.6.1
