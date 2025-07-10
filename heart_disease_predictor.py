@@ -68,9 +68,8 @@ if st.button("预测"):
         predicted_proba = model.predict_proba(feature_df)[0]
         probability = predicted_proba[predicted_class] * 100
 
-        # 显示预测结果
-        risk_level = "高风险" if predicted_class == 1 else "低风险"
-        st.success(f"预测结果: {risk_level}")
+        # 显示结果
+        st.success(f"预测结果: {'高风险' if predicted_class == 1 else '低风险'}")
         st.info(f"预测概率: {probability:.2f}%")
         
         # SHAP解释
@@ -79,13 +78,13 @@ if st.button("预测"):
         
         # 处理多分类情况
         if isinstance(shap_values, list):
-            shap_values_class = shap_values[predicted_class][0]
             expected_value = explainer.expected_value[predicted_class]
+            shap_values_to_plot = shap_values[predicted_class][0]
         else:
-            shap_values_class = shap_values[0]
             expected_value = explainer.expected_value
+            shap_values_to_plot = shap_values[0]
 
-        # 绘制SHAP力力图
+        # 绘制力力图
         st.subheader("特征影响分析")
         plt.figure(figsize=(10, 3))
         shap.plots.force(
