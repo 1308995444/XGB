@@ -19,18 +19,18 @@ model = joblib.load('RF.pkl')
 
 # 特征定义
 feature_ranges = {
-    'gender': {"type": "categorical", "options": [1, 2], "desc": "性别/Gender (1:男/Male, 2:女/Female)"},
-    'rural2': {"type": "categorical", "options": [1,2], "desc": "户口类型/Gender (1:农村, 2:城市)"},
-    'diabe': {"type": "categorical", "options": [0,1], "desc": "糖尿病/Arthritis (0:无/No, 1:有/Yes)"},
-    'lunge': {"type": "categorical", "options": [0, 1], "desc": "肺部疾病/Arthritis (0:无/No, 1:有/Yes)"},
-    'hearte': {"type": "categorical", "options": [0, 1], "desc": "心脏病/Digestive issues (0:无/No, 1:有/Yes)"},
-    'dyslipe': {"type": "categorical", "options": [0, 1], "desc": "退休状态/Retirement status (0:未退休/Not retired, 1:已退休/Retired)"},
-    'hhcperc': {"type": "numerical", "min": 0.0, "max": 100.0, "default": 8.0, "desc": "家庭年收入/Sleep duration (万元)","step": 0.1,"format": "%.1f"},
-    'retire': {"type": "categorical", "options": [0, 1], "desc": "退休状态/Retirement status (0:未退休/Not retired, 1:已退休/Retired)"},
-    'sleep': {"type": "numerical", "min": 0.0, "max": 24.0, "default": 8.0, "desc": "睡眠时长/Sleep duration (小时/hours)","step": 0.1,"format": "%.1f"},
-    'edu': {"type": "categorical", "options": [1,2,3,4], "desc": "教育程度/Education level (1:小学以下/Below Primary, 2:小学/Primary, 3:中学/Secondary, 4:中学以上/Above Secondary)"},
-    'da040': {"type": "categorical", "options": [0, 1], "desc": "慢性疼痛/Chronic pain (0:无/No, 1:有/Yes)"},
-    'pension': {"type": "categorical", "options": [0, 1], "desc": "养老保险/Pension (0:无/No, 1:有/Yes)"},
+    'gender': {"type": "categorical", "options": [1, 2], "desc": "性别(1:男/Male, 2:女/Female)"},
+    'rural2': {"type": "categorical", "options": [1,2], "desc": "户口类型 (1:农村, 2:城市)"},
+    'diabe': {"type": "categorical", "options": [0,1], "desc": "糖尿病 (0:无/No, 1:有/Yes)"},
+    'lunge': {"type": "categorical", "options": [0, 1], "desc": "肺部疾病 (0:无/No, 1:有/Yes)"},
+    'hearte': {"type": "categorical", "options": [0, 1], "desc": "心脏病(0:无/No, 1:有/Yes)"},
+    'dyslipe': {"type": "categorical", "options": [0, 1], "desc": "退休状态 (0:未退休/Not retired, 1:已退休/Retired)"},
+    'hhcperc': {"type": "numerical", "min": 0.0, "max": 100.0, "default": 8.0, "desc": "家庭年收入 (万元)","step": 0.1,"format": "%.1f"},
+    'retire': {"type": "categorical", "options": [0, 1], "desc": "退休状态 (0:未退休/Not retired, 1:已退休/Retired)"},
+    'sleep': {"type": "numerical", "min": 0.0, "max": 24.0, "default": 8.0, "desc": "睡眠时长(小时/hours)","step": 0.1,"format": "%.1f"},
+    'edu': {"type": "categorical", "options": [1,2,3,4], "desc": "教育程度 (1:小学以下/Below Primary, 2:小学/Primary, 3:中学/Secondary, 4:中学以上/Above Secondary)"},
+    'da040': {"type": "categorical", "options": [0, 1], "desc": "慢性疼痛 (0:无/No, 1:有/Yes)"},
+    'pension': {"type": "categorical", "options": [0, 1], "desc": "养老保险 (0:无/No, 1:有/Yes)"},
 }
 
 # 界面布局
@@ -91,27 +91,9 @@ if st.button("Predict"):
     force_plot = shap.force_plot(
         base_value=expected_value,
         shap_values=shap_values_class[0],
-        features=feature_df.iloc[0],
+        features=feature_df.iloc[0].values.reshape(1, -1),
         feature_names=feature_df.columns.tolist(),
         matplotlib=False
     )
     shap_html = f"<head>{shap.getjs()}</head><body>{force_plot.html()}</body>"
     st.components.v1.html(shap_html, height=400, scrolling=True)
-    
-    # 方法2: 使用瀑布图作为替代可视化
-    st.subheader("SHAP值解释 - 瀑布图")
-    fig, ax = plt.subplots(figsize=(10, 6))
-    shap.plots._waterfall.waterfall_legacy(
-        expected_value, 
-        shap_values_class[0], 
-        feature_names=feature_df.columns,
-        max_display=12,
-        show=False
-    )
-    st.pyplot(fig)
-    
-    # 方法3: 特征重要性条形图
-    st.subheader("SHAP特征重要性")
-    plt.figure()
-    shap.summary_plot(shap_values_class, feature_df, plot_type="bar", show=False)
-    st.pyplot(plt.gcf())
