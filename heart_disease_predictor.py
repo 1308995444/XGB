@@ -89,11 +89,10 @@ if st.button("Predict"):
     # 方法1: 使用HTML渲染force plot
     st.subheader("SHAP解释 - 特征影响")
     force_plot = shap.force_plot(
-        base_value=expected_value,
-        shap_values=shap_values_class[0],
-        features=feature_df.iloc[0].values.reshape(1, -1),
-        feature_names=feature_df.columns.tolist(),
-        matplotlib=False
-    )
+    base_value=expected_value,
+    shap_values=shap_values_class[0],  # 确保是单个样本的 SHAP 值
+    features=feature_df.iloc[0].values,  # 直接使用一维数组，不 reshape
+    feature_names=feature_df.columns.tolist()  # 确保是列表格式
+)
     shap_html = f"<head>{shap.getjs()}</head><body>{force_plot.html()}</body>"
     st.components.v1.html(shap_html, height=400, scrolling=True)
