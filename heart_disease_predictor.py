@@ -6,13 +6,6 @@ import shap
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
 
-# 设置中文字体
-try:
-    font_path = "SimHei.ttf"  # 或者您系统中可用的中文字体路径
-    font_prop = font_manager.FontProperties(fname=font_path)
-    plt.rcParams['font.family'] = font_prop.get_name()
-except:
-    st.warning("中文字体设置失败，可能显示为方框")
 
 # 模型加载
 model = joblib.load('RF.pkl')
@@ -62,40 +55,39 @@ features = np.array([feature_values])
 
 # 预测与解释
 if st.button("Predict"):
-    # 确保特征名称与模型训练时一致
-    feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
-    
-    predicted_class = model.predict(feature_df)[0]
-    predicted_proba = model.predict_proba(feature_df)[0]
+    predicted_class = model.predict(features)[0]
+    predicted_proba = model.predict_proba(features)[0]
     probability = predicted_proba[predicted_class] * 100
 
     # 结果显示
-    text_en = f"预测概率: {probability:.2f}% ({'高风险' if predicted_class == 1 else '低风险'})"
+    text_en = f"Predicted probability: {probability:.2f}% ({'High risk' if predicted_class == 1 else 'Low risk'})"
     fig, ax = plt.subplots(figsize=(10,2))
     ax.text(0.5, 0.7, text_en, 
-            fontsize=14, ha='center', va='center')
+            fontsize=14, ha='center', va='center', fontname='Arial')
     ax.axis('off')
     st.pyplot(fig)
 
-    # SHAP解释 - 使用新API
+    # SHAP解释
     explainer = shap.TreeExplainer(model)
-    shap_values = explainer(feature_df)
+    shap_values = explainer.shap_values(pd.DataFrame([feature_values], columns=feature_ranges.keys()))
     
-    # 对于分类模型，选择正确的类别
-    if len(shap_values.shape) == 3:  # 多分类
-        shap_values_class = shap_values[..., predicted_class]
+    if isinstance(shap_values, list):
+
+        shap_values_class = shap_values[predicted_class][0]
         expected_value = explainer.expected_value[predicted_class]
-    else:  # 二分类
-        shap_values_class = shap_values
-        expected_value = explainer.expected_value[predicted_class]
-    
-    # 使用新的force_plot API
-    st.subheader("SHAP解释")
-    fig, ax = plt.subplots()
-    shap.plots.force(expected_value, 
-                    shap_values_class[0,:], 
-                    feature_df.iloc[0,:],
-                    matplotlib=True,
-                    show=False,
-                    ax=ax)
-    st.pyplot(fig)
+    else:
+
+        shap_values_class = shap_values[0]
+        expected_value = explainer.expected_value
+
+    feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
+
+    plt.figure()
+    shap_plot = shap.force_plot(
+        expected_value,
+        shap_values_class,
+        feature_df,
+        matplotlib=True,
+        show=False
+    )
+    st.pyplot(plt.gcf())
