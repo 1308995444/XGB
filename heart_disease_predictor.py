@@ -6,6 +6,7 @@ import shap
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
 
+# 模型加载
 model = joblib.load('RF.pkl')
 
 # 特征定义
@@ -81,21 +82,19 @@ if st.button("Predict"):
     
     # 使用新的force_plot API
     st.subheader("SHAP解释 - 特征影响")
-    fig, ax = plt.subplots(figsize=(10, 4))
     
-    # 创建force plot
-    shap.plots.force(
+    # 方法1: 使用HTML渲染
+    force_plot = shap.force_plot(
         base_value=expected_value,
         shap_values=shap_values_class[0],
         features=feature_df.iloc[0],
-        matplotlib=True,
-        show=False,
-        ax=ax
+        matplotlib=False
     )
-    st.pyplot(fig)
+    shap_html = f"<head>{shap.getjs()}</head><body>{force_plot.html()}</body>"
+    st.components.v1.html(shap_html, height=400)
     
-    # 添加条形图展示特征重要性
+    # 方法2: 使用matplotlib (备选方案)
     st.subheader("SHAP特征重要性")
-    fig2, ax2 = plt.subplots(figsize=(10, 6))
+    plt.figure()
     shap.summary_plot(shap_values_class, feature_df, plot_type="bar", show=False)
-    st.pyplot(fig2)
+    st.pyplot(plt.gcf())
