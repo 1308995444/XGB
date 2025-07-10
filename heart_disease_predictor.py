@@ -1,18 +1,13 @@
 import streamlit as st
 import joblib
-import numpy as np
 import pandas as pd
 import shap
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
-import warnings
 
 # 设置中文显示
-rcParams['font.sans-serif'] = ['SimHei']  # 使用黑体显示中文
-rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
-
-# 忽略版本警告
-warnings.filterwarnings("ignore", category=UserWarning)
+rcParams['font.sans-serif'] = ['SimHei']
+rcParams['axes.unicode_minus'] = False
 
 # 加载模型
 @st.cache_resource
@@ -40,111 +35,46 @@ feature_ranges = {
     'pension': {"type": "categorical", "options": [0, 1], "desc": "养老保险 (0:无, 1:有)"},
 }
 
-# 界面布局
-st.title("抑郁症风险预测模型")
-st.markdown("---")
-
 # 输入表单
-st.header("请输入特征值")
+st.title("SHAP特征影响分析")
 feature_values = []
-cols = st.columns(2)  # 创建两列布局
+for feature, props in feature_ranges.items():
+    if props["type"] == "numerical":
+        value = st.number_input(props["desc"], 
+                              min_value=float(props["min"]),
+                              max_value=float(props["max"]),
+                              value=float(props["default"]),
+                              step=props.get("step", 1.0))
+    else:
+        value = st.selectbox(props["desc"], options=props["options"])
+    feature_values.append(value)
 
-for i, (feature, props) in enumerate(feature_ranges.items()):
-    with cols[i % 2]:  # 交替分布在两列中
-        if props["type"] == "numerical":
-            value = st.number_input(
-                props["desc"],
-                min_value=float(props["min"]),
-                max_value=float(props["max"]),
-                value=float(props["default"]),
-                step=props.get("step", 1.0),
-                format=props.get("format", "%f")
-            )
-        else:
-            value = st.selectbox(
-                props["desc"],
-                options=props["options"],
-                index=0
-            )
-        feature_values.append(value)
-
-# 预测按钮
-if st.button("开始预测", type="primary"):
-    with st.spinner("正在计算..."):
-        try:
-            # 准备数据
-            feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
-            
-            # 执行预测
-            predicted_class = model.predict(feature_df)[0]
-            predicted_proba = model.predict_proba(feature_df)[0]
-            probability = predicted_proba[predicted_class] * 100
-            
-            # 显示预测结果
-            st.markdown("---")
-            st.subheader("预测结果")
-            if predicted_class == 1:
-                st.error(f"高风险 (概率: {probability:.1f}%)")
-            else:
-                st.success(f"低风险 (概率: {100-probability:.1f}%)")
-            
-            # SHAP解释
-            st.markdown("---")
-            st.subheader("特征影响分析")
-            
-            explainer = shap.TreeExplainer(model)
-            shap_values = explainer.shap_values(feature_df)
-            
-            # 处理多分类情况
-            if isinstance(shap_values, list):
-                expected_value = explainer.expected_value[predicted_class]
-                shap_values_plot = shap_values[predicted_class]
-            else:
-                expected_value = explainer.expected_value
-                shap_values_plot = shap_values
-            
-            # 力力图
-            st.markdown("#### 单个特征贡献")
-            plt.figure(figsize=(10, 3))
-            shap.plots.force(
-                expected_value,
-                shap_values_plot[0],  # 第一个样本
-                feature_df.iloc[0],
-                matplotlib=True,
-                show=False
-            )
-            st.pyplot(plt.gcf(), bbox_inches='tight')
-            plt.close()
-            
-            # 特征重要性
-            st.markdown("#### 特征重要性排序")
-            plt.figure(figsize=(10, 6))
-            shap.summary_plot(
-                shap_values_plot,
-                feature_df,
-                plot_type="bar",
-                show=False
-            )
-            st.pyplot(plt.gcf(), bbox_inches='tight')
-            plt.close()
-            
-            # 详细SHAP值表格
-            st.markdown("#### 详细特征贡献值")
-            contrib_df = pd.DataFrame({
-                "特征": feature_ranges.keys(),
-                "特征值": feature_values,
-                "SHAP值": shap_values_plot[0]
-            }).sort_values("SHAP值", ascending=False)
-            st.dataframe(contrib_df.style.background_gradient(cmap="RdBu", subset=["SHAP值"]))
-            
-        except Exception as e:
-            st.error(f"预测过程中发生错误: {str(e)}")
-
-# 添加说明
-st.markdown("---")
-st.info("""
-**使用说明：**
-1. 填写/选择所有特征值
-2. 点击"开始预测"按钮
-3. 查看预测结果和特征影响分析
-""")
+if st.button("分析特征影响"):
+    feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
+    
+    # 计算SHAP值
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(feature_df)
+    
+    # 处理多分类情况
+    if isinstance(shap_values, list):
+        # 如果是多分类模型，默认显示第一个类别的解释
+        expected_value = explainer.expected_value[0]
+        shap_values_plot = shap_values[0]
+    else:
+        # 二分类或回归模型
+        expected_value = explainer.expected_value
+        shap_values_plot = shap_values
+    
+    # 绘制SHAP力图
+    st.subheader("特征贡献力图示")
+    plt.figure(figsize=(10, 3))
+    shap.plots.force(
+        base_value=expected_value,
+        shap_values=shap_values_plot[0],
+        features=feature_df.iloc[0],
+        matplotlib=True,
+        show=False
+    )
+    st.pyplot(plt.gcf())
+    plt.close()
