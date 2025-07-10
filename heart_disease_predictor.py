@@ -50,6 +50,8 @@ for feature, properties in feature_ranges.items():
         )
     feature_values.append(value)
 
+features = np.array([feature_values])
+
 # 预测与解释
 if st.button("Predict"):
     predicted_class = model.predict(features)[0]
