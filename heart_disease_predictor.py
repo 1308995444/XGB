@@ -33,7 +33,7 @@ feature_ranges = {
 }
 
 # 界面布局
-st.title("抑郁症风险预测模型 ")
+st.title("抑郁症风险预测模型")
 st.header("请输入以下特征值:")
 
 # 输入表单
@@ -73,27 +73,39 @@ if st.button("预测"):
         st.success(f"预测结果: {risk_level}")
         st.info(f"预测概率: {probability:.2f}%")
         
-    # SHAP解释
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(pd.DataFrame([feature_values], columns=feature_ranges.keys()))
-    
-    if isinstance(shap_values, list):
+        # SHAP解释
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(feature_df)
+        
+        # 处理多分类情况
+        if isinstance(shap_values, list):
+            shap_values_class = shap_values[predicted_class][0]
+            expected_value = explainer.expected_value[predicted_class]
+        else:
+            shap_values_class = shap_values[0]
+            expected_value = explainer.expected_value
 
-        shap_values_class = shap_values[predicted_class][0]
-        expected_value = explainer.expected_value[predicted_class]
-    else:
+        # 绘制SHAP力力图
+        st.subheader("特征影响分析")
+        plt.figure(figsize=(10, 3))
+        shap.plots.force(
+            expected_value,
+            shap_values_class,
+            feature_df.iloc[0],
+            matplotlib=True,
+            show=False
+        )
+        st.pyplot(plt.gcf())
+        plt.close()
+        
+    except Exception as e:
+        st.error(f"发生错误: {str(e)}")
 
-        shap_values_class = shap_values[0]
-        expected_value = explainer.expected_value
-
-    feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
-
-    plt.figure()
-    shap_plot = shap.force_plot(
-        expected_value,
-        shap_values_class,
-        feature_df,
-        matplotlib=True,
-        show=False
-    )
-    st.pyplot(plt.gcf())
+# 添加说明
+st.markdown("---")
+st.info("""
+**使用说明：**
+1. 填写/选择所有特征值
+2. 点击"预测"按钮
+3. 查看预测结果和特征影响分析
+""")
