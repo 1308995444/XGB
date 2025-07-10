@@ -87,13 +87,7 @@ if st.button("预测"):
         # 绘制力力图
         st.subheader("特征影响分析")
         plt.figure(figsize=(10, 3))
-        shap.plots.force(
-            expected_value,  # 基准值作为第一个参数
-            shap_values_to_plot,  # SHAP值
-            feature_df.iloc[0],  # 特征值
-            matplotlib=True,
-            show=False
-        )
+        shap.plots.force(explainer.expected_value, shap_values)
         st.pyplot(plt.gcf())
         plt.close()
         
