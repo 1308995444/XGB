@@ -54,39 +54,59 @@ features = np.array([feature_values])
 
 # 预测与解释
 if st.button("Predict"):
-    predicted_class = model.predict(features)[0]
-    predicted_proba = model.predict_proba(features)[0]
-    probability = predicted_proba[predicted_class] * 100
+    try:
+        # 预测结果
+        predicted_class = model.predict(features)[0]
+        predicted_proba = model.predict_proba(features)[0]
+        probability = predicted_proba[predicted_class] * 100
 
-    # 结果显示
-    text_en = f"Predicted probability: {probability:.2f}% ({'High risk' if predicted_class == 1 else 'Low risk'})"
-    fig, ax = plt.subplots(figsize=(10,2))
-    ax.text(0.5, 0.7, text_en, 
-            fontsize=14, ha='center', va='center', fontname='Arial')
-    ax.axis('off')
-    st.pyplot(fig)
+        # 结果显示
+        risk_text = 'High risk' if predicted_class == 1 else 'Low risk'
+        st.markdown(f"## Prediction Result: **{risk_text}**")
+        st.markdown(f"### Probability: **{probability:.2f}%**")
 
-    # SHAP解释
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(pd.DataFrame([feature_values], columns=feature_ranges.keys()))
-    
-    if isinstance(shap_values, list):
+        # SHAP解释
+        explainer = shap.TreeExplainer(model)
+        feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
+        shap_values = explainer.shap_values(feature_df)
 
-        shap_values_class = shap_values[predicted_class][0]
-        expected_value = explainer.expected_value[predicted_class]
-    else:
+        # 处理多分类和单分类情况
+        if isinstance(shap_values, list):
+            # 多分类情况
+            shap_values_class = shap_values[predicted_class]
+            expected_value = explainer.expected_value[predicted_class]
+        else:
+            # 单分类情况
+            shap_values_class = shap_values
+            expected_value = explainer.expected_value
 
-        shap_values_class = shap_values[0]
-        expected_value = explainer.expected_value
+        # SHAP force plot
+        st.subheader("SHAP Explanation (How each feature contributes to the prediction)")
+        fig, ax = plt.subplots(figsize=(10, 3))
+        shap.force_plot(
+            expected_value,
+            shap_values_class[0],  # 取第一个样本的解释
+            feature_df.iloc[0],   # 取第一个样本的特征值
+            matplotlib=True,
+            show=False,
+            plot_cmap=["#77dd77", "#ff6961"],  # 绿色和红色
+            text_rotation=15,
+            fig=fig
+        )
+        st.pyplot(fig, bbox_inches='tight')
+        plt.close()
 
-    feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
+        # 可选：添加条形图解释
+        st.subheader("Feature Importance")
+        fig2, ax2 = plt.subplots(figsize=(10, 6))
+        shap.summary_plot(
+            shap_values_class,
+            feature_df,
+            plot_type="bar",
+            show=False
+        )
+        st.pyplot(fig2)
+        plt.close()
 
-    plt.figure()
-    shap_plot = shap.force_plot(
-        expected_value,
-        shap_values_class,
-        feature_df,
-        matplotlib=True,
-        show=False
-    )
-    st.pyplot(plt.gcf())
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
