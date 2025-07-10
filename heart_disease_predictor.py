@@ -6,14 +6,6 @@ import shap
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
 
-# 设置中文字体
-try:
-    font_path = "SimHei.ttf"  # 替换为您系统中可用的中文字体路径
-    font_prop = font_manager.FontProperties(fname=font_path)
-    plt.rcParams['font.family'] = font_prop.get_name()
-except:
-    st.warning("中文字体设置失败，可能显示为方框")
-
 # 模型加载
 model = joblib.load('RF.pkl')
 
@@ -60,39 +52,39 @@ for feature, properties in feature_ranges.items():
 
 # 预测与解释
 if st.button("Predict"):
-    # 创建DataFrame并确保特征名称匹配
-    feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
-    
-    # 预测
-    predicted_class = model.predict(feature_df)[0]
-    predicted_proba = model.predict_proba(feature_df)[0]
+    predicted_class = model.predict(features)[0]
+    predicted_proba = model.predict_proba(features)[0]
     probability = predicted_proba[predicted_class] * 100
 
     # 结果显示
-    st.subheader("预测结果")
-    st.write(f"预测概率: {probability:.2f}% ({'高风险' if predicted_class == 1 else '低风险'})")
+    text_en = f"Predicted probability: {probability:.2f}% ({'High risk' if predicted_class == 1 else 'Low risk'})"
+    fig, ax = plt.subplots(figsize=(10,2))
+    ax.text(0.5, 0.7, text_en, 
+            fontsize=14, ha='center', va='center', fontname='Arial')
+    ax.axis('off')
+    st.pyplot(fig)
 
     # SHAP解释
     explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(feature_df)
+    shap_values = explainer.shap_values(pd.DataFrame([feature_values], columns=feature_ranges.keys()))
     
-    # 处理SHAP值(适用于二分类和多分类)
     if isinstance(shap_values, list):
-        # 多分类情况
-        shap_values_class = shap_values[predicted_class]
+
+        shap_values_class = shap_values[predicted_class][0]
         expected_value = explainer.expected_value[predicted_class]
     else:
-        # 二分类情况
-        shap_values_class = shap_values
-        expected_value = explainer.expected_value[predicted_class]
-    
-    # 方法1: 使用HTML渲染force plot
-    st.subheader("SHAP解释 - 特征影响")
-    force_plot = shap.force_plot(
-    base_value=expected_value,
-    shap_values=shap_values_class[0],  # 确保是单个样本的 SHAP 值
-    features=feature_df.iloc[0].values,  # 直接使用一维数组，不 reshape
-    feature_names=feature_df.columns.tolist()  # 确保是列表格式
-)
-    shap_html = f"<head>{shap.getjs()}</head><body>{force_plot.html()}</body>"
-    st.components.v1.html(shap_html, height=400, scrolling=True)
+
+        shap_values_class = shap_values[0]
+        expected_value = explainer.expected_value
+
+    feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
+
+    plt.figure()
+    shap_plot = shap.force_plot(
+        expected_value,
+        shap_values_class,
+        feature_df,
+        matplotlib=True,
+        show=False
+    )
+    st.pyplot(plt.gcf())
