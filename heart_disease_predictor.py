@@ -6,6 +6,14 @@ import shap
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
 
+# 设置中文字体
+try:
+    font_path = "SimHei.ttf"  # 替换为您系统中可用的中文字体路径
+    font_prop = font_manager.FontProperties(fname=font_path)
+    plt.rcParams['font.family'] = font_prop.get_name()
+except:
+    st.warning("中文字体设置失败，可能显示为方框")
+
 # 模型加载
 model = joblib.load('RF.pkl')
 
@@ -50,8 +58,6 @@ for feature, properties in feature_ranges.items():
         )
     feature_values.append(value)
 
-features = np.array([feature_values])
-
 # 预测与解释
 if st.button("Predict"):
     # 创建DataFrame并确保特征名称匹配
@@ -80,20 +86,31 @@ if st.button("Predict"):
         shap_values_class = shap_values
         expected_value = explainer.expected_value[predicted_class]
     
-    # 使用新的force_plot API
+    # 方法1: 使用HTML渲染force plot
     st.subheader("SHAP解释 - 特征影响")
-    
-    # 方法1: 使用HTML渲染
     force_plot = shap.force_plot(
         base_value=expected_value,
         shap_values=shap_values_class[0],
         features=feature_df.iloc[0],
+        feature_names=feature_df.columns.tolist(),
         matplotlib=False
     )
     shap_html = f"<head>{shap.getjs()}</head><body>{force_plot.html()}</body>"
-    st.components.v1.html(shap_html, height=400)
+    st.components.v1.html(shap_html, height=400, scrolling=True)
     
-    # 方法2: 使用matplotlib (备选方案)
+    # 方法2: 使用瀑布图作为替代可视化
+    st.subheader("SHAP值解释 - 瀑布图")
+    fig, ax = plt.subplots(figsize=(10, 6))
+    shap.plots._waterfall.waterfall_legacy(
+        expected_value, 
+        shap_values_class[0], 
+        feature_names=feature_df.columns,
+        max_display=12,
+        show=False
+    )
+    st.pyplot(fig)
+    
+    # 方法3: 特征重要性条形图
     st.subheader("SHAP特征重要性")
     plt.figure()
     shap.summary_plot(shap_values_class, feature_df, plot_type="bar", show=False)
