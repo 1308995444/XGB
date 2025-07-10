@@ -72,24 +72,3 @@ if st.button("预测"):
         st.success(f"预测结果: {'高风险' if predicted_class == 1 else '低风险'}")
         st.info(f"预测概率: {probability:.2f}%")
         
-        # SHAP解释
-        explainer = shap.TreeExplainer(model)
-        shap_values = explainer.shap_values(feature_df)
-        
-        # 处理多分类情况
-        if isinstance(shap_values, list):
-            expected_value = explainer.expected_value[predicted_class]
-            shap_values_to_plot = shap_values[predicted_class][0]
-        else:
-            expected_value = explainer.expected_value
-            shap_values_to_plot = shap_values[0]
-
-        # 绘制力力图
-        st.subheader("特征影响分析")
-        plt.figure(figsize=(10, 3))
-        shap.plots.force(explainer.expected_value, shap_values)
-        st.pyplot(plt.gcf())
-        plt.close()
-        
-    except Exception as e:
-        st.error(f"发生错误: {str(e)}")
