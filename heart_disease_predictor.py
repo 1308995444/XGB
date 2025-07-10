@@ -71,4 +71,6 @@ if st.button("预测"):
         # 显示结果
         st.success(f"预测结果: {'高风险' if predicted_class == 1 else '低风险'}")
         st.info(f"预测概率: {probability:.2f}%")
-        
+
+    except Exception as e:
+        st.error(f"发生错误: {str(e)}")
