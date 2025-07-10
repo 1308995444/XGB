@@ -73,41 +73,27 @@ if st.button("预测"):
         st.success(f"预测结果: {risk_level}")
         st.info(f"预测概率: {probability:.2f}%")
         
-        # SHAP解释可视化
-        st.subheader("特征影响分析")
-        explainer = shap.TreeExplainer(model)
-        shap_values = explainer.shap_values(feature_df)
-        
-        # 处理多分类情况
-        if isinstance(shap_values, list):
-            expected_value = explainer.expected_value[predicted_class]
-            shap_values = shap_values[predicted_class]
-        else:
-            expected_value = explainer.expected_value
+    # SHAP解释
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(pd.DataFrame([feature_values], columns=feature_ranges.keys()))
+    
+    if isinstance(shap_values, list):
 
-        # 新版SHAP力力图
-        plt.figure(figsize=(10, 3))
-        shap.plots.force(
-            expected_value,
-            shap_values[0],
-            feature_df.iloc[0],
-            matplotlib=True,
-            show=False
-        )
-        st.pyplot(plt.gcf())
-        plt.close()
-        
-        # 特征重要性条形图
-        st.subheader("特征重要性排序")
-        plt.figure(figsize=(10, 6))
-        shap.summary_plot(
-            shap_values,
-            feature_df,
-            plot_type="bar",
-            show=False
-        )
-        st.pyplot(plt.gcf())
-        plt.close()
-        
-    except Exception as e:
-        st.error(f"发生错误: {str(e)}")
+        shap_values_class = shap_values[predicted_class][0]
+        expected_value = explainer.expected_value[predicted_class]
+    else:
+
+        shap_values_class = shap_values[0]
+        expected_value = explainer.expected_value
+
+    feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
+
+    plt.figure()
+    shap_plot = shap.force_plot(
+        expected_value,
+        shap_values_class,
+        feature_df,
+        matplotlib=True,
+        show=False
+    )
+    st.pyplot(plt.gcf())
