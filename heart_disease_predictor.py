@@ -89,9 +89,9 @@ if st.button("预测"):
         st.subheader("特征影响分析")
         plt.figure(figsize=(10, 3))
         shap.plots.force(
-            expected_value,
-            shap_values_class,
-            feature_df.iloc[0],
+            expected_value,  # 基准值作为第一个参数
+            shap_values_to_plot,  # SHAP值
+            feature_df.iloc[0],  # 特征值
             matplotlib=True,
             show=False
         )
@@ -100,12 +100,3 @@ if st.button("预测"):
         
     except Exception as e:
         st.error(f"发生错误: {str(e)}")
-
-# 添加说明
-st.markdown("---")
-st.info("""
-**使用说明：**
-1. 填写/选择所有特征值
-2. 点击"预测"按钮
-3. 查看预测结果和特征影响分析
-""")
