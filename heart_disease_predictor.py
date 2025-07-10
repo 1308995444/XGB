@@ -1,22 +1,19 @@
 import streamlit as st
 import joblib
+import numpy as np
 import pandas as pd
 import shap
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
-# 设置中文显示
-rcParams['font.sans-serif'] = ['SimHei']
-rcParams['axes.unicode_minus'] = False
+# 设置中文字体
+rcParams['font.sans-serif'] = ['SimHei']  # 使用黑体显示中文
+rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 
-# 加载模型
-@st.cache_resource
-def load_model():
-    return joblib.load('RF.pkl')
+# 加载随机森林模型
+model = joblib.load('RF.pkl')
 
-model = load_model()
-
-# 特征定义
+# 特征定义（中文界面）
 feature_ranges = {
     'gender': {"type": "categorical", "options": [1, 2], "desc": "性别 (1:男, 2:女)"},
     'rural2': {"type": "categorical", "options": [1, 2], "desc": "户口类型 (1:农村, 2:城市)"},
@@ -35,46 +32,82 @@ feature_ranges = {
     'pension': {"type": "categorical", "options": [0, 1], "desc": "养老保险 (0:无, 1:有)"},
 }
 
+# 界面布局
+st.title("抑郁症风险预测模型 ")
+st.header("请输入以下特征值:")
+
 # 输入表单
-st.title("SHAP特征影响分析")
 feature_values = []
-for feature, props in feature_ranges.items():
-    if props["type"] == "numerical":
-        value = st.number_input(props["desc"], 
-                              min_value=float(props["min"]),
-                              max_value=float(props["max"]),
-                              value=float(props["default"]),
-                              step=props.get("step", 1.0))
+for feature, properties in feature_ranges.items():
+    if properties["type"] == "numerical":
+        value = st.number_input(
+            label=properties["desc"],
+            min_value=float(properties["min"]),
+            max_value=float(properties["max"]),
+            value=float(properties["default"]),
+            step=properties.get("step", 1.0),
+            format=properties.get("format", "%f"),
+            key=f"num_{feature}"
+        )
     else:
-        value = st.selectbox(props["desc"], options=props["options"])
+        value = st.selectbox(
+            label=properties["desc"],
+            options=properties["options"],
+            key=f"cat_{feature}"
+        )
     feature_values.append(value)
 
-if st.button("分析特征影响"):
-    feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
-    
-    # 计算SHAP值
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(feature_df)
-    
-    # 处理多分类情况
-    if isinstance(shap_values, list):
-        # 如果是多分类模型，默认显示第一个类别的解释
-        expected_value = explainer.expected_value[0]
-        shap_values_plot = shap_values[0]
-    else:
-        # 二分类或回归模型
-        expected_value = explainer.expected_value
-        shap_values_plot = shap_values
-    
-    # 绘制SHAP力图
-    st.subheader("特征贡献力图示")
-    plt.figure(figsize=(10, 3))
-    shap.plots.force(
-        base_value=expected_value,
-        shap_values=shap_values_plot[0],
-        features=feature_df.iloc[0],
-        matplotlib=True,
-        show=False
-    )
-    st.pyplot(plt.gcf())
-    plt.close()
+# 预测与解释
+if st.button("预测"):
+    try:
+        # 准备数据
+        feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
+        
+        # 执行预测
+        predicted_class = model.predict(feature_df)[0]
+        predicted_proba = model.predict_proba(feature_df)[0]
+        probability = predicted_proba[predicted_class] * 100
+
+        # 显示预测结果
+        risk_level = "高风险" if predicted_class == 1 else "低风险"
+        st.success(f"预测结果: {risk_level}")
+        st.info(f"预测概率: {probability:.2f}%")
+        
+        # SHAP解释可视化
+        st.subheader("特征影响分析")
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(feature_df)
+        
+        # 处理多分类情况
+        if isinstance(shap_values, list):
+            expected_value = explainer.expected_value[predicted_class]
+            shap_values = shap_values[predicted_class]
+        else:
+            expected_value = explainer.expected_value
+
+        # 新版SHAP力力图
+        plt.figure(figsize=(10, 3))
+        shap.plots.force(
+            expected_value,
+            shap_values[0],
+            feature_df.iloc[0],
+            matplotlib=True,
+            show=False
+        )
+        st.pyplot(plt.gcf())
+        plt.close()
+        
+        # 特征重要性条形图
+        st.subheader("特征重要性排序")
+        plt.figure(figsize=(10, 6))
+        shap.summary_plot(
+            shap_values,
+            feature_df,
+            plot_type="bar",
+            show=False
+        )
+        st.pyplot(plt.gcf())
+        plt.close()
+        
+    except Exception as e:
+        st.error(f"发生错误: {str(e)}")
