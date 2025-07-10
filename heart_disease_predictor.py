@@ -4,6 +4,11 @@ import numpy as np
 import pandas as pd
 import shap
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
+
+# 设置中文字体
+rcParams['font.sans-serif'] = ['SimHei']  # 使用黑体显示中文
+rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 
 # 加载随机森林模型
 model = joblib.load('RF.pkl')
@@ -28,7 +33,7 @@ feature_ranges = {
 }
 
 # 界面布局
-st.title("抑郁症风险预测模型 (含SHAP可视化)")
+st.title("抑郁症风险预测模型 (带SHAP可视化)")
 st.header("请输入以下特征值:")
 
 # 输入表单
@@ -54,48 +59,56 @@ for feature, properties in feature_ranges.items():
 
 # 预测与解释
 if st.button("预测"):
-    # 准备数据
-    features = np.array([feature_values])
-    feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
-    
-    # 执行预测
-    predicted_class = model.predict(features)[0]
-    predicted_proba = model.predict_proba(features)[0]
-    probability = predicted_proba[predicted_class] * 100
+    try:
+        # 准备数据（使用DataFrame保持特征名称）
+        feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
+        
+        # 执行预测
+        predicted_class = model.predict(feature_df)[0]
+        predicted_proba = model.predict_proba(feature_df)[0]
+        probability = predicted_proba[predicted_class] * 100
 
-    # 显示预测结果
-    result_text = f"预测概率: {probability:.2f}% ({'高风险' if predicted_class == 1 else '低风险'})"
-    fig, ax = plt.subplots(figsize=(10, 2))
-    ax.text(0.5, 0.7, result_text, 
-            fontsize=14, ha='center', va='center', fontname='SimHei')  # 使用中文黑体
-    ax.axis('off')
-    st.pyplot(fig)
+        # 显示预测结果（优化中文显示）
+        risk_level = "高风险" if predicted_class == 1 else "低风险"
+        st.success(f"预测结果: {risk_level}")
+        st.info(f"预测概率: {probability:.2f}%")
+        
+        # SHAP解释可视化
+        st.subheader("特征影响分析")
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(feature_df)
+        
+        # 处理多分类情况
+        if isinstance(shap_values, list):
+            expected_value = explainer.expected_value[predicted_class]
+            shap_values = shap_values[predicted_class]
+        else:
+            expected_value = explainer.expected_value
 
-    # SHAP解释可视化
-    st.subheader("特征影响分析")
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(feature_df)
-    
-    # 处理SHAP值（适应随机森林和多分类情况）
-    if isinstance(shap_values, list):
-        shap_values_class = shap_values[predicted_class][0]
-        expected_value = explainer.expected_value[predicted_class]
-    else:
-        shap_values_class = shap_values[0]
-        expected_value = explainer.expected_value
-
-    # 绘制SHAP力力图
-    plt.figure()
-    shap.force_plot(
-        expected_value,
-        shap_values_class,
-        feature_df.iloc[0],
-        matplotlib=True,
-        show=False
-    )
-    st.pyplot(plt.gcf())
-    
-    # 添加SHAP摘要图（可选）
-    st.subheader("特征重要性摘要")
-    shap.summary_plot(shap_values, feature_df, plot_type="bar", show=False)
-    st.pyplot(plt.gcf())
+        # 新版SHAP力力图（兼容v0.20+）
+        fig, ax = plt.subplots(figsize=(10, 3))
+        shap.plots.force(
+            expected_value,
+            shap_values[0],  # 取第一个样本的SHAP值
+            feature_df.iloc[0],
+            matplotlib=True,
+            show=False,
+            fig=fig
+        )
+        st.pyplot(fig)
+        plt.close()
+        
+        # 添加特征重要性条形图
+        st.subheader("特征重要性排序")
+        fig2, ax2 = plt.subplots(figsize=(10, 6))
+        shap.summary_plot(
+            shap_values,
+            feature_df,
+            plot_type="bar",
+            show=False
+        )
+        st.pyplot(fig2)
+        plt.close()
+        
+    except Exception as e:
+        st.error(f"发生错误: {str(e)}")
