@@ -6,8 +6,6 @@ import shap
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
 
-
-# 模型加载
 model = joblib.load('RF.pkl')
 
 # 特征定义
@@ -55,39 +53,49 @@ features = np.array([feature_values])
 
 # 预测与解释
 if st.button("Predict"):
-    predicted_class = model.predict(features)[0]
-    predicted_proba = model.predict_proba(features)[0]
+    # 创建DataFrame并确保特征名称匹配
+    feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
+    
+    # 预测
+    predicted_class = model.predict(feature_df)[0]
+    predicted_proba = model.predict_proba(feature_df)[0]
     probability = predicted_proba[predicted_class] * 100
 
     # 结果显示
-    text_en = f"Predicted probability: {probability:.2f}% ({'High risk' if predicted_class == 1 else 'Low risk'})"
-    fig, ax = plt.subplots(figsize=(10,2))
-    ax.text(0.5, 0.7, text_en, 
-            fontsize=14, ha='center', va='center', fontname='Arial')
-    ax.axis('off')
-    st.pyplot(fig)
+    st.subheader("预测结果")
+    st.write(f"预测概率: {probability:.2f}% ({'高风险' if predicted_class == 1 else '低风险'})")
 
     # SHAP解释
     explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(pd.DataFrame([feature_values], columns=feature_ranges.keys()))
+    shap_values = explainer.shap_values(feature_df)
     
+    # 处理SHAP值(适用于二分类和多分类)
     if isinstance(shap_values, list):
-
-        shap_values_class = shap_values[predicted_class][0]
+        # 多分类情况
+        shap_values_class = shap_values[predicted_class]
         expected_value = explainer.expected_value[predicted_class]
     else:
-
-        shap_values_class = shap_values[0]
-        expected_value = explainer.expected_value
-
-    feature_df = pd.DataFrame([feature_values], columns=feature_ranges.keys())
-
-    plt.figure()
-    shap_plot = shap.force_plot(
-        expected_value,
-        shap_values_class,
-        feature_df,
+        # 二分类情况
+        shap_values_class = shap_values
+        expected_value = explainer.expected_value[predicted_class]
+    
+    # 使用新的force_plot API
+    st.subheader("SHAP解释 - 特征影响")
+    fig, ax = plt.subplots(figsize=(10, 4))
+    
+    # 创建force plot
+    shap.plots.force(
+        base_value=expected_value,
+        shap_values=shap_values_class[0],
+        features=feature_df.iloc[0],
         matplotlib=True,
-        show=False
+        show=False,
+        ax=ax
     )
-    st.pyplot(plt.gcf())
+    st.pyplot(fig)
+    
+    # 添加条形图展示特征重要性
+    st.subheader("SHAP特征重要性")
+    fig2, ax2 = plt.subplots(figsize=(10, 6))
+    shap.summary_plot(shap_values_class, feature_df, plot_type="bar", show=False)
+    st.pyplot(fig2)
